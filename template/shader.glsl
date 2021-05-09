@@ -87,7 +87,7 @@ void ray_march(vec3 ro, vec3 rd) {
 			color = compute_light(p);
 			break;
 		}
-		else if(ray_length >= RAY_MAX_LENGTH) {
+		if(ray_length >= RAY_MAX_LENGTH) {
 			break;
 		}
 
