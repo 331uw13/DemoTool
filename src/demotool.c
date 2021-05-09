@@ -12,6 +12,10 @@
 #include "demotool.h"
 
 
+#define MAX(a, b) (a >= b ? a : b)
+#define MIN(a, b) (a <= b ? a : b)
+
+
 static GLFWwindow* window = NULL;
 static int window_width = 0;
 static int window_height = 0;
@@ -62,7 +66,7 @@ void dt_start(char* title) {
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 	glfwGetWindowSize(window, &window_width, &window_height);
-	glViewport(0, 0, window_width, window_height);
+	glViewport(0.0, 0.0, window_width, window_height);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetWindowPos(window, monitor_x, monitor_y);
@@ -126,6 +130,7 @@ void dt_play(double* timeline, u64 num_points, char* vs_path, char* fs_path, cha
 
 		// Find uniform locations.
 
+		const u32 ulocation_point_time = glGetUniformLocation(program, "gPointTime");
 		const u32 ulocation_timeline_point = glGetUniformLocation(program, "gTimelinePoint");
 		const u32 ulocation_time = glGetUniformLocation(program, "gTime");
 		const u32 ulocation_res = glGetUniformLocation(program, "gRes");
@@ -135,14 +140,28 @@ void dt_play(double* timeline, u64 num_points, char* vs_path, char* fs_path, cha
 
 		u64 timeline_point = 0;
 		double start = glfwGetTime();
-		double timeline_point_start = start;
+		double point_start = start;
+		double dt = 0.0;
+		const double min_dt = 60.0 / 1000.0;
 
 		while(!glfwWindowShouldClose(window) && audio_length > 0) {
 
-			const double elapsed = glfwGetTime() - start;
+			if(dt < min_dt) {
+				// Previous frame finished early.
+				SDL_Delay((min_dt - dt) * 1000.0);
+			}
+			
+			const double time = glfwGetTime();
+			const double elapsed = MAX(0, time - start);
+			const double point_time = MAX(0, time - point_start);
+
 			if(glfwGetKey(window, GLFW_KEY_ENTER)) {
-				start = glfwGetTime();
+				// Reset timings.
 				timeline_point = 0;
+				start = glfwGetTime();
+				point_start = start;
+
+				// Reset audio.
 				audio_pos = audio_start;
 				audio_length = audio_start_length;
 			}
@@ -152,9 +171,12 @@ void dt_play(double* timeline, u64 num_points, char* vs_path, char* fs_path, cha
 			
 			glClearColor(0.0, 0.0, 0.0, 1.0);
 			glClear(GL_COLOR_BUFFER_BIT);
+			
 			glUseProgram(program);
 
+
 			glUniform1i(ulocation_timeline_point,  timeline_point);
+			glUniform1f(ulocation_point_time,      point_time);
 			glUniform1f(ulocation_time,            elapsed);
 			glUniform2f(ulocation_res,             window_width, window_height);
 
@@ -165,8 +187,8 @@ void dt_play(double* timeline, u64 num_points, char* vs_path, char* fs_path, cha
 			glVertex2f( 1.0, -1.0);
 			glEnd();
 			
-			if(elapsed - timeline_point_start > timeline[timeline_point]) {
-				timeline_point_start = glfwGetTime();
+			if(point_time > timeline[timeline_point]) {
+				point_start = time;
 				if(timeline_point+1 < num_points) {
 					timeline_point++;
 				}
@@ -174,6 +196,7 @@ void dt_play(double* timeline, u64 num_points, char* vs_path, char* fs_path, cha
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
+			dt = glfwGetTime() - time;
 		}
 
 		if(audio_dev > 0) {

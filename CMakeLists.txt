@@ -3,7 +3,7 @@ project(demo-engine C)
 
 find_package(OpenGL REQUIRED)
 
-set(WARNINGS "-Wall -Wextra -Wunused-function -Wformat -Wformat-overflow -Wpointer-arith -lglfw -lGLEW -lGL -lSDL2")
+set(WARNINGS "-Wall -Wextra -Wunused-function -Wformat -Wformat-overflow -Wpointer-arith -lglfw -lGLEW -lGL -lSDL2 -O3")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3")
 endif()

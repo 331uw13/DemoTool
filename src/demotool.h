@@ -6,6 +6,7 @@
 
 #include "common.h"
 
+
 void dt_start(char* title);
 void dt_play(double* timeline, u64 timeline_size, char* vs_path, char* fs_path, char* music_path);
 void dt_quit();
