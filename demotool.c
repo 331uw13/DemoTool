@@ -62,9 +62,12 @@ int dt_check_status(u32 id, u32 flag) {
 }
 
 
+#include "./testing/song.h"
+
+
 void sdl_audio_callback(void* userdata, u8* stream, int bytes) {
 	if(audio_length == 0 || bytes <= 0 || stream == NULL) { return; }
-	bytes = ((u32)bytes > audio_length ? audio_length : (u32)bytes);
+	bytes = MIN(bytes, audio_length);
 
 	if(dt_gflags & DT_PAUSED) { 
 		memset(stream, 0, bytes);
@@ -289,6 +292,8 @@ void dt_initialize(char* title, u32 flags) {
 	}
 }
 
+
+
 void dt_play(char* music_path, void(*frame_update_callback)(double)) {
 	
 	if(frame_update_callback == NULL) {
@@ -299,6 +304,8 @@ void dt_play(char* music_path, void(*frame_update_callback)(double)) {
 	SDL_AudioDeviceID audio_dev = 0;
 	u8* audio_init_pos = NULL;
 	u32 audio_init_length = 0;
+
+	audio_length = sizeof song_data;
 
 	if(!(dt_gflags & DT_NO_AUDIO)) {
 		if(SDL_LoadWAV(music_path, &audio_spec, &audio_init_pos, &audio_init_length)) {
@@ -329,6 +336,7 @@ void dt_play(char* music_path, void(*frame_update_callback)(double)) {
 
 
 	while(!glfwWindowShouldClose(window) && audio_length > 0) {
+		
 		if(dt < min_dt) {
 			// Previous frame finished early.
 			SDL_Delay((min_dt-dt)*1000.0);
@@ -451,6 +459,4 @@ void dt_shader_uniform_3i(char* name, int x, int y, int z) {
 void dt_shader_uniform_4i(char* name, int x, int y, int z, int w) {
 	glUniform4i(glGetUniformLocation(dt_current_shader, name), x, y, z, w);
 }
-
-
 

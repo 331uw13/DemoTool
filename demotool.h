@@ -28,13 +28,13 @@ typedef long unsigned int  u64;
 #define DT_WINDOW_W  0  // Window width.
 #define DT_WINDOW_H  1  // Window height.
 
-
+/*
 struct dt_timep {
 	int     id;       // Position in array.
 	u8      playing;  // Is it active right now?
 	u8      played;   // Is it now already played?
 };
-
+*/
 void dt_initialize(char* title, u32 flags);
 void dt_play(char* music_path, void(*frame_update_callback)(double));
 void dt_stop();
